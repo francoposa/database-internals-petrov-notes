@@ -18,9 +18,9 @@ Logical clocks include monotonic clocks; wall clocks report on time as it exists
 The core difficulties of distributed systems stem from the fact that the components are not physically located in the same place, and communicate through links which are expected to be nondeterministically slow and unreliable.
 Communication may be delayed, reordered, fail completely, etc.; processes may be slow, hung, crashed or unresponsive.
 
-Distributed systems shares concepts in common with concurrent programming, though concurrent programming cannot be applied directly to distributed systems as concurrent programming is assumed to be distributed across the cores of a single CPU, whose links are presumed to be reliable and low-cost to communicate across.
+Concurrent programming shares concepts with distributed systems, but cannot be applied directly to distributed systems as concurrent programming is assumed to be distributed across the cores of a single CPU whose links are reliable and low-latency.
 
-Distributed systems algorithms coordinate local and remote state, transitioning between states (a.k.a. steps or phases) which account for the expectation of unreliable networks and system components failures.
+Distributed systems algorithms coordinate local and remote state, executing transitions between states (a.k.a. steps or phases) which account for the expectation of unreliable networks and system components failures.
 
 Distributed algorithms serve various purposes:
 
