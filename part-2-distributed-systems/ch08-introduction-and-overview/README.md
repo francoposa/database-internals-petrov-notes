@@ -202,6 +202,36 @@ This is impossible to guarantee without perfectly reliable network links, which 
 As discussed in previous sections, the sender cannot be certain a message is delivered and therefore must retransmit until an acknowledgement is received.
 The receiver cannot be certain that the acknowledgement was received, so the receiver cannot assume that the same message will not be sent again.
 
-Instead, network communication protocols generally use **At-Least-Once** delivery, where the sender retransmits until it receives an acknowledgement, and the receiver uses deduplication to avoid processing any messages delivered more than once.
+Instead, network communication protocols generally use **At-Least-Once Delivery**, where the sender retransmits until it receives an acknowledgement, and the receiver uses deduplication to avoid processing any messages delivered more than once.
 
-Some communication needs may call for an *unreliable protocol* such as UDP, utilizing **At-Most-Once** delivery, where the sender transmits each message once and does not track whether the message is received.
+Some communication needs may call for an *unreliable protocol* such as UDP, utilizing **At-Most-Once Delivery**, where the sender transmits each message once and does not track whether the message is received.
+
+Since exactly-once delivery cannot be guaranteed, instead we focus on **Exactly-Once Processing**.
+Duplicate packets will be delivered and must be processed idempotently, so it is the processing that matters, not the delivery.
+A record delivered to a database node is of no use unless it is processed and then available from the database.
+
+In order to provide an exactly-once guarantee, nodes must have **common knowledge**: every node knows a fact, and every node knows that all other nodes agree with that fact.
+More simply, all nodes most agree that a record was or was not processed.
+In theory, this is impossible, but we rely on it in practice by relaxing some constraints.
+
+## The Two Generals Problem
+The Two Generals is a thought experiment to show that it is impossible to achieve an agreement between two communicating parties if communication is asynchronous in the presence of link failures.
+Although TCP exhibits properties of a perfect link, perfect links do not guarantee perfect delivery.
+
+### The Two Generals
+Two armies, led by two generals, are preparing to coordinate an attack on a fortified city.
+The generals stand on opposite sides of the city, and the attack will only succeed if they both attack simultaneously.
+
+The generals must agree on whether or not to carry out their plan (or when to attack, etc. - the important part is that they must come to an agreement).
+
+1. General A sends a message `m(n)`, announcing the intention to attack, **if** General B will also attack
+2. After General A sends the message, they do not know if the messenger has arrived or whether they were captured
+3. If General B receives the message, they can send acknowledgement `ack(m(n))`, agreeing to attack
+4. General B also does not know if the acknowledgement message has arrived or not
+5. To be certain that General A received the ack, General B must wait for the ack of the ack, `ack(ack(m(n)))`
+
+We can see that the generals are doomed to forever wait on one more `ack` to be certain the attack will be coordinated.
+
+Note that this communication is asynchronous and not time-bound.
+The generals are not communicating synchronously, such as sending visual signals that can be immediately acknowledged.
+The generals are also not making timing assumptions, such as "if I do not receive an ack in x time, I can assume it was not delivered".
