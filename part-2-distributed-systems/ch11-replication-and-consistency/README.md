@@ -48,3 +48,44 @@ As such, a system must be designed to prioritize one or the other in the event o
 **PACELC** extends CAP to state that even when operating normally without network partitions (**E**lse), systems must choose between **C**onsistency and **L**atency.
 A system takes a nonzero amount of time to establish consistency, and that time is the latency before the operation is committed and subsequent reads can see the update.
 Users have limited thresholds they will tolerate for this latency - from the user's perspective, long-enough latency will have a similar effect as the system being unavailable.
+
+### Use CAP Carefully
+Note that CAP discusses network partitions, where the partitioned node may continue to serve requests, not a node crash.
+Network partitions may also come and go, a partition is not necessarily a permanent state.
+
+In the real world there are many more failure modes for a cluster beyond just a network partition, though some failure modes may have the same properties as a network partition.
+
+### Harvest and Yield
+
+Instead of defining consistency and availability in the strictest terms, we can look at two tunable metrics:
+
+**Harvest** defines how complete the query results are; in the case of an unresponsive node, returning partial results may be preferable to failing to provide a response
+
+**Yield** specifies the portion of all requests that were completed successfully; yield is not necessarily uptime, as up-but-busy nodes may fail to respond or fail to respond within a timeout.
+
+## Shared Memory
+From the client's perspective, a distributed system acts like it is a single-node system.
+Internode communication and consensus are hidden behind interfaces.
+
+* a single unit of read/write storage is called a **register**.
+* **shared memory** in a distributed system can be modeled as an array of registers.
+* read and write operations are modeled by the **invocation** and **completion** events.
+* read and write operations are not instantaneous - `t_completion` is strictly greater than `t_invocation`
+* if an operation is invoked after another completes, then the two operations are **sequential**.
+* if an operation is invoked after another operation is invoked and before the other operation is completed, then those two operations (and any others sharing the same time space) are **concurrent**.
+
+Three types of registers behave differently in the presence of concurrent operations:
+
+**Safe Registers**
+
+During concurrent writes, reads from safe registers may return arbitrary values within the range of the data type of the register.
+(This is not very practical - I have not found any reason it exists other than to draw contrast with more strict register types.)
+When reading from a safe register without concurrent writes, a safe register must return the value from the most recent completed write.
+
+**Regular Registers**
+During concurrent writes, reads from regular registers may return the value from the most recent completed write OR the value from any of the concurrent writes.
+
+**Atomic Registers**
+Atomic registers guarantee linearizability: every write operation has a linearization point, before which all reads return an old value and after which all reads return the new value
+
+## Ordering
